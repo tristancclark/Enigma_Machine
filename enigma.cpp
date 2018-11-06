@@ -1,33 +1,59 @@
 #include<iostream>
 #include<fstream>
+#include<string.h>
 #include"enigma.h"
 #include"errors.h"
 
 using namespace std;
 
 //plugboard functions
-void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc)
+void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int& number_of_rotors)
 {
   int number;
-  
-  plugboard.initialisePlugboard(argv[1]);
-  reflector.initialiseReflector(argv[2]);
+  number_of_rotors = getNumberOfRotors(argv, argc);
+  int index_first_rotor = getFileTypeIndex(argv, argc, ".rot");
+
+  plugboard.initialisePlugboard(argv[getFileTypeIndex(argv, argc, ".pb")]);
+  reflector.initialiseReflector(argv[getFileTypeIndex(argv, argc, ".rf")]);
 
   ifstream in_stream;
-  in_stream.open(argv[argc-1]);
-  for (int i = 0; i < argc-3; i++)
+  in_stream.open(argv[getFileTypeIndex(argv, argc, ".pos")]);
+  for (int i = 0; i < number_of_rotors; i++)
   {
     in_stream >> number;
-    rotors[i].initialiseRotor(argv[i+3], number);
+    rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
   }
 }
 
-void showEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc)
+int getNumberOfRotors(char** argv, int argc)
+{
+  int count = 0;
+  for (int i = 0; i < argc; i++)
+  {
+    if (strstr(argv[i], ".rot"))
+      count++;
+  }
+  return count;
+}
+
+int getFileTypeIndex(char** argv, int argc, const char* extension)
+{
+  for (int i = 0; i < argc; i++)
+  {
+    if (strstr(argv[i], extension))
+      return i;
+  }
+  return 0;
+}
+
+void displayEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc, int number_of_rotors)
 {
   cout << "Plugboard mapping:  ";
   for (int i = 0; i < 26; i++)
     cout << plugboard.mapping[i] << " ";
-  cout << endl;
+  cout << endl << endl;
+
+  cout << number_of_rotors << " rotors are present." << endl << endl;
 
   for (int i = 0; i < argc - 4; i++)
   {
@@ -35,11 +61,12 @@ void showEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, in
     for (int j = 0; j < 26; j++)
       cout << rotors[i].mapping[j] << " ";
     cout << endl;
-    cout << "Rotor relative shift: " << rotors[i].relative_position << endl;
-    cout << "Rotor " << i+1 << " notches: ";
+    cout << "Relative shift: " << rotors[i].relative_position << endl;
+    cout << "Notches occur at: ";
     for (int j = 0; j < 26; j++)
-      cout << rotors[i].notches[j] << " ";
-    cout << endl;
+      if(rotors[i].notches[j] == 1)
+	cout << j << " ";
+    cout << endl << endl;
   }
   
   cout << "Reflector mapping:  ";
@@ -49,21 +76,22 @@ void showEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, in
  }  
 
       
-void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors)
+void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors)
 {
   int input = input_letter - 65;
   plugboard.getOutput(input);
- 
-  for (int i = 0; i < argc-4; i++)
+  
+  
+  for (int i = 0; i < number_of_rotors; i++)
   {
-    rotors[i].getOutputForwards(input);
+    rotors[number_of_rotors-1-i].getOutputForwards(input);
   }
 
   reflector.getOutput(input);
   
-  for (int i = 0; i < argc-4; i++)
+  for (int i = 0; i < number_of_rotors; i++)
   {
-    rotors[argc-5-i].getOutputBackwards(input);
+    rotors[i].getOutputBackwards(input);
   }
 
   plugboard.getOutput(input);
@@ -71,7 +99,7 @@ void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard
   input_letter = input + 65;
 }
 
-void getTotalOutputWithComments(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors)
+void getTotalOutputWithComments(char& input_letter, int argc, char** argv, Reflector reflector, Plugboard plugboard, Rotor* rotors)
 {
   int input = input_letter - 65;
   cout << endl << "Input number:  " << input << endl;
@@ -81,8 +109,8 @@ void getTotalOutputWithComments(char& input_letter, int argc, Reflector reflecto
   
   for (int i = 0; i < argc-4; i++)
   {
-    rotors[i].getOutputForwardsWithComments(input);
-    cout << "Output from rotor " << i << ":  " << input << endl;
+    rotors[argc-5-i].getOutputForwardsWithComments(input);
+    cout << "Output from rotor " << argc-5-i << ":  " << input << endl;
   }
 
   reflector.getOutput(input);
@@ -90,8 +118,8 @@ void getTotalOutputWithComments(char& input_letter, int argc, Reflector reflecto
   
   for (int i = 0; i < argc-4; i++)
   {
-    rotors[argc-5-i].getOutputBackwards(input);
-    cout << "Output from rotor " << argc-5-i << ":  " << input << endl; 
+    rotors[i].getOutputBackwards(input);
+    cout << "Output from rotor " << i << ":  " << input << endl; 
   }
 
   plugboard.getOutput(input);
@@ -246,7 +274,6 @@ void Rotor::getOutputForwards(int& input)
   if (relative_output < 0)
     relative_output += 26;
   input = relative_output;
-  cout << input << endl; 
 }
 
 void Rotor::getOutputForwardsWithComments(int& input)
@@ -290,6 +317,8 @@ void Rotor::getOutputBackwards(int& input)
 bool Rotor::turnRotor()
 {
   relative_position++;
+  if (relative_position == 26)
+    relative_position = 0;
   if (notches[relative_position] == 1)
     return true;
   return false;

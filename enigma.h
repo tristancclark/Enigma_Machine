@@ -33,11 +33,11 @@ class Rotor
   bool turnRotor();
 };
 
-void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors);
-void getTotalOutputWithComments(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors);
-
-void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc);
-
-void showEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc);
+void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors);
+void getTotalOutputWithComments(char& input_letter, int argc, char** argv, Reflector reflector, Plugboard plugboard, Rotor* rotors);
+void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int& number_of_rotors);
+void displayEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc, int number_of_rotors);
+int getFileTypeIndex(char** argv, int argc, const char* extension);
+int getNumberOfRotors(char** argv, int argc);
 
 #endif
