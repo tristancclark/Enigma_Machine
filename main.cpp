@@ -14,14 +14,10 @@ int main(int argc, char** argv) {
   char input[10000];
   int number_of_rotors;
 
-  if (argc < 3) //check if number of parameters is sufficient
-  {
-    cerr << "Error: insufficient number of parameters." << endl;
-    exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
-  }
-
   initialiseEnigma(plugboard, reflector, rotors, argv, argc, number_of_rotors);
-  //displayEnigmaSetUp(plugboard, reflector, rotors, argc, number_of_rotors); //uncomment to check enigma set up.
+  
+  //displayEnigmaSetUp(plugboard, reflector, rotors, argc, number_of_rotors);
+  //uncomment to check enigma set up.
   
   cin >> input;
   cin >> ws;

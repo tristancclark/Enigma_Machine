@@ -12,9 +12,17 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
   int number;
   number_of_rotors = getNumberOfRotors(argv, argc);
   int index_first_rotor = getFileTypeIndex(argv, argc, ".rot");
+  int index_plugboard = getFileTypeIndex(argv, argc, ".pb");
+  int index_reflector = getFileTypeIndex(argv, argc, ".rf");
 
-  plugboard.initialisePlugboard(argv[getFileTypeIndex(argv, argc, ".pb")]);
-  reflector.initialiseReflector(argv[getFileTypeIndex(argv, argc, ".rf")]);
+  if (!index_plugboard || !index_reflector)
+  {
+    cerr << "Error: insufficient number of parameters." << endl;
+    exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
+  }
+
+  plugboard.initialisePlugboard(argv[index_plugboard]);
+  reflector.initialiseReflector(argv[index_reflector]);
 
   ifstream in_stream;
   in_stream.open(argv[getFileTypeIndex(argv, argc, ".pos")]);
