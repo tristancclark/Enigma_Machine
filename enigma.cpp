@@ -156,15 +156,15 @@ void Plugboard::initialisePlugboard(char* config_file_name)
     if (in_stream.eof())
       break;
 
-    if (loop_count == 13) //check for too many parameters
+    if (loop_count == 14) //check for too many parameters
     {
-      cout << "Incorrect number of parameters in plugboard file " << config_file_name;
+      cerr << "Incorrect number of parameters in plugboard file " << config_file_name;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
     }
       
     if (in_stream.fail()) //check for valid input
     {
-      cout << "Non-numeric character in plugboard file " << config_file_name;
+      cerr << "Non-numeric character in plugboard file " << config_file_name;
       exit(NON_NUMERIC_CHARACTER);
     }
     
@@ -172,25 +172,36 @@ void Plugboard::initialisePlugboard(char* config_file_name)
     
     if (in_stream.eof()) //check for odd number of parameters
     {
-      cout << "Incorrect number of parameters in plugboard file " << config_file_name;
+      cerr << "Incorrect number of parameters in plugboard file " << config_file_name;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
     }
       
     if (in_stream.fail()) //check for invalid input
     {
-      cout << "Non-numeric character in plugboard file " << config_file_name << endl;
+      cerr << "Non-numeric character in plugboard file " << config_file_name;
       exit(NON_NUMERIC_CHARACTER);
     }
+    
     if (pair[0] == pair[1])
-      exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION); 
+    {
+      cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name;
+      exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION);
+    }
+    
     if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25)
+    {
+      cerr << "Parameter out of range in plugboard file " << config_file_name;
       exit(INVALID_INDEX);
+    }
     if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1)
-      exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION); 
+    {
+      cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name;
+      exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION);
+    }
       
     mapping[pair[0]] = pair[1]; //swap pairs
     mapping[pair[1]] = pair[0];
-    swapped[pair[0]] = 1; //set numbers to swapped
+    swapped[pair[0]] = 1; //set contacts to already swapped
     swapped[pair[1]] = 1;
   }
   in_stream.close();
@@ -206,7 +217,7 @@ void Plugboard::getOutput(int& input)
 void Reflector::initialiseReflector(char* config_file_name)
 {
   ifstream in_stream;
-  int pair[2];
+  int pair[2], loop_count = 0;
   bool swapped[26] = {};
   
   in_stream.open(config_file_name); //open file
@@ -216,40 +227,65 @@ void Reflector::initialiseReflector(char* config_file_name)
     exit(ERROR_OPENING_CONFIGURATION_FILE);
   }
       
-  for (int i = 0; i < 14; i++)
+  while(true)
   {
+    loop_count++;
     in_stream >> pair[0]; //import first digit and check
-    if (i == 13) //check for too many inputs
+    
+    if (in_stream.eof())
     {
-      if (in_stream.eof())
-	break;
-      else
+      if (loop_count != 14)
+      {
+	cerr << "Insufficient number of mappings in reflector file " << config_file_name;
 	exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
+      }
+      else
+	break;
+    }
+
+    if (loop_count == 14)
+    {
+      cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name;
+      exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
     }
     
-    if ((in_stream.eof())) {  //check first digit is valid
-      cout << "fail at loop " << i;
-      exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);}
-        if (in_stream.fail()){
-      cout << "fail 1 at loop " << i;
-      exit(NON_NUMERIC_CHARACTER);}
+    if (in_stream.fail())
+    {
+      cerr << "Non-numeric character in reflector file " << config_file_name;
+      exit(NON_NUMERIC_CHARACTER);
+    }
     
     in_stream >> pair[1]; //import second digit and check
-    if (in_stream.eof())
-      exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);   
-    if (in_stream.fail()){
-      cout << "fail 2 at loop " << i;
-      exit(NON_NUMERIC_CHARACTER);}
-      
     
+    if (in_stream.eof())
+    {
+      cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name;
+      exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
+    }
+    
+    if (in_stream.fail())
+    {
+      cerr << "Non-numeric character in reflector file " << config_file_name;
+      exit(NON_NUMERIC_CHARACTER);
+    }
+      
     if (pair[0] == pair[1]) //check mapping digit to itself
+    {
+      cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name;
       exit(INVALID_REFLECTOR_MAPPING);
+    }
     
     if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25) //check for out of range
+    {
+      cerr << "Parameter out of range in plugboard file " << config_file_name;
       exit(INVALID_INDEX);
+    }
     
     if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1) //check mapping same number to more than one other
-      exit(INVALID_REFLECTOR_MAPPING); 
+    {
+      cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name;
+      exit(INVALID_REFLECTOR_MAPPING);
+    }
       
     mapping[pair[0]] = pair[1]; //swap pairs
     mapping[pair[1]] = pair[0];
@@ -288,8 +324,11 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
   while (!in_stream.fail())
   {
     notches[number] = 1;
+
     in_stream >> number;
   }
+  
+  in_stream.close();
 }
 
 
