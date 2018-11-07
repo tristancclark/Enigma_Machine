@@ -26,7 +26,6 @@ void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** a
     cout << input;
     cin >> input;
   }
-  cout << endl;
 }
 
 void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int& number_of_rotors)
@@ -129,39 +128,12 @@ void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard
   input_letter = input + 65;
 }
 
-void getTotalOutputWithComments(char& input_letter, int argc, char** argv, Reflector reflector, Plugboard plugboard, Rotor* rotors)
-{
-  int input = input_letter - 65;
-  cout << endl << "Input number:  " << input << endl;
-  
-  plugboard.getOutput(input);
-  cout << "Ouput from plugboard: " << input << endl;
-  
-  for (int i = 0; i < argc-4; i++)
-  {
-    rotors[argc-5-i].getOutputForwardsWithComments(input);
-    cout << "Output from rotor " << argc-5-i << ":  " << input << endl;
-  }
-
-  reflector.getOutput(input);
-  cout << "Output from reflector: " << input << endl; 
-  
-  for (int i = 0; i < argc-4; i++)
-  {
-    rotors[i].getOutputBackwards(input);
-    cout << "Output from rotor " << i << ":  " << input << endl; 
-  }
-
-  plugboard.getOutput(input);
-  cout << "Output from plugboard:  " << input << endl;
-  
-  input_letter = input + 65;
-}
+//PLUGBOARD FUNCTIONS
 
 void Plugboard::initialisePlugboard(char* config_file_name)
 {
   ifstream in_stream;
-  int pair[2];
+  int pair[2], loop_count = 0;
   bool swapped[26] = {};
   
   for (int i = 0; i < 26; i++) //initialise as one to one mapping
@@ -169,18 +141,46 @@ void Plugboard::initialisePlugboard(char* config_file_name)
 
   in_stream.open(config_file_name);//open file
 
+  if (in_stream.fail()) //check for failure opening file
+  {
+    cerr << "Error: file could not be opened." << endl;
+    exit(ERROR_OPENING_CONFIGURATION_FILE);
+  }
+
   while(true)
   {
-    in_stream >> pair[0];
+    loop_count++;
+    
+    in_stream >> pair[0]; //take in first integer
+
     if (in_stream.eof())
       break;
-    if (in_stream.fail())
-      exit(NON_NUMERIC_CHARACTER);
-    in_stream >> pair[1];
-    if (in_stream.eof())
+
+    if (loop_count == 13) //check for too many parameters
+    {
+      cout << "Incorrect number of parameters in plugboard file " << config_file_name;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
-    if (in_stream.fail())
-      exit(NON_NUMERIC_CHARACTER); 
+    }
+      
+    if (in_stream.fail()) //check for valid input
+    {
+      cout << "Non-numeric character in plugboard file " << config_file_name;
+      exit(NON_NUMERIC_CHARACTER);
+    }
+    
+    in_stream >> pair[1]; //take in second digit
+    
+    if (in_stream.eof()) //check for odd number of parameters
+    {
+      cout << "Incorrect number of parameters in plugboard file " << config_file_name;
+      exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
+    }
+      
+    if (in_stream.fail()) //check for invalid input
+    {
+      cout << "Non-numeric character in plugboard file " << config_file_name << endl;
+      exit(NON_NUMERIC_CHARACTER);
+    }
     if (pair[0] == pair[1])
       exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION); 
     if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25)
@@ -188,7 +188,6 @@ void Plugboard::initialisePlugboard(char* config_file_name)
     if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1)
       exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION); 
       
-    // cout << "swapping " << pair[0] << " with " << pair[1] << endl;
     mapping[pair[0]] = pair[1]; //swap pairs
     mapping[pair[1]] = pair[0];
     swapped[pair[0]] = 1; //set numbers to swapped
@@ -211,7 +210,7 @@ void Reflector::initialiseReflector(char* config_file_name)
   bool swapped[26] = {};
   
   in_stream.open(config_file_name); //open file
-  if (in_stream.fail())
+  if (in_stream.fail()) 
   {
     cerr << "Error: file could not be opened." << endl;
     exit(ERROR_OPENING_CONFIGURATION_FILE);
