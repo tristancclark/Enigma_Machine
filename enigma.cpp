@@ -7,6 +7,28 @@
 using namespace std;
 
 //plugboard functions
+void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors)
+{
+  char input[10000];
+
+  cin >> ws;
+  cin >> input;
+  while(!cin.eof()){
+    for (size_t i = 0; i < strlen(input); i++)
+    {
+      for (int j = 0; j < number_of_rotors; j++) //turn rotors using notches
+      {
+	if (!rotors[number_of_rotors - 1 - j].turnRotor())
+	  break;
+      }
+      getTotalOutput(input[i], argc, reflector, plugboard, rotors, number_of_rotors);
+    }
+    cout << input;
+    cin >> input;
+  }
+  cout << endl;
+}
+
 void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int& number_of_rotors)
 {
   int number;
@@ -327,6 +349,7 @@ bool Rotor::turnRotor()
   relative_position++;
   if (relative_position == 26)
     relative_position = 0;
+  cout << "relative position changed to:  " << relative_position << endl;
   if (notches[relative_position] == 1)
     return true;
   return false;

@@ -39,5 +39,6 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
 void displayEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc, int number_of_rotors);
 int getFileTypeIndex(char** argv, int argc, const char* extension);
 int getNumberOfRotors(char** argv, int argc);
+void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors);
 
 #endif
