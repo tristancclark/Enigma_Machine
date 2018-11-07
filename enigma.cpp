@@ -349,7 +349,6 @@ bool Rotor::turnRotor()
   relative_position++;
   if (relative_position == 26)
     relative_position = 0;
-  cout << "relative position changed to:  " << relative_position << endl;
   if (notches[relative_position] == 1)
     return true;
   return false;
