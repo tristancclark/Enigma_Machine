@@ -55,7 +55,7 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
 
   ifstream in_stream;
   in_stream.open(argv[index_rotor_position]);
-  for (int i = 0; i < number_of_rotors++; i++)
+  for (int i = 0; i < number_of_rotors + 1; i++)
   {
     in_stream >> number;
     
@@ -75,9 +75,10 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
       cerr << "No starting position for rotor " << i << " in rotor position file " << argv[index_rotor_position] << endl;
       exit(NO_ROTOR_STARTING_POSITION);
     }
+    
     if (in_stream.fail())
     {
-      cerr << "Non-numerical character in rotor position file " << argv[index_rotor_position] << endl;
+      cerr << "Non-numerical character in rotor positions file " << argv[index_rotor_position] << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
     rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
@@ -266,7 +267,7 @@ void Reflector::initialiseReflector(char* config_file_name)
     {
       if (loop_count != 14)
       {
-	cerr << "Insufficient number of mappings in reflector file " << config_file_name << endl;
+	cerr << "Insufficient number of mappings in reflector file: " << config_file_name << endl;
 	exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
       }
       in_stream.close();
@@ -375,12 +376,15 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
     if (already_mapped[number] == 1)
     {
       cerr << "Invalid mapping of input " << i << "to output " << number << " (output " << number << " is already mapped to from input " << endl;
-      exit(INVALID_ROTOR_MAPPING);
-    }
-    for (int j = 0; j < 26; j++)
-    {
-      if (mapping[j] == number)
-	cerr << j << ") in rotor file " << config_file_name << endl;
+ 
+      for (int j = 0; j < 26; j++)
+      {
+	if (mapping[j] == number)
+	{
+	  cerr << j << ") in rotor file " << config_file_name << endl;
+	  exit(INVALID_ROTOR_MAPPING);
+	}
+      }
     }
     
     mapping[i] = number;
