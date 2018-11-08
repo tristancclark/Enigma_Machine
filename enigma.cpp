@@ -16,11 +16,18 @@ void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** a
   while(!cin.eof()){
     for (size_t i = 0; i < strlen(input); i++)
     {
+      if (input[i] < 65 || input[i] > 90)
+      {
+	cerr << input[i] << " is not a valid input character (input characters must be upper case letters A-Z)!" << endl;
+	exit(INVALID_INPUT_CHARACTER);
+      }
+      
       for (int j = 0; j < number_of_rotors; j++) //turn rotors using notches
       {
 	if (!rotors[number_of_rotors - 1 - j].turnRotor())
 	  break;
       }
+      
       getTotalOutput(input[i], argc, reflector, plugboard, rotors, number_of_rotors);
     }
     cout << input;
@@ -57,10 +64,10 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
       if (!in_stream.eof())
       {
 	cerr << "Too many parameters in rotor position file " << argv[index_rotor_position] << ", only " << number_of_rotors << " rotors exist." << endl;
-	exit(TOO_MANY_ROTOR_STARTING_POSITIONS);
+	exit(TOO_MANY_PARAMETERS);
       }
-      else
-	break;
+      in_stream.close();
+      return;
     }
     
     if (in_stream.eof())
@@ -262,8 +269,8 @@ void Reflector::initialiseReflector(char* config_file_name)
 	cerr << "Insufficient number of mappings in reflector file " << config_file_name << endl;
 	exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
       }
-      else
-	break;
+      in_stream.close();
+      return;
     }
 
     if (loop_count == 14)
@@ -329,7 +336,7 @@ void Reflector::getOutput(int& input)
 void Rotor::initialiseRotor(char* config_file_name, int starting_position)
 {
   ifstream in_stream;
-  int number;
+  int number, loop_count = 0;
   bool already_mapped[26] = {};
   
   relative_position = starting_position;
@@ -368,12 +375,14 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
     if (already_mapped[number] == 1)
     {
       cerr << "Invalid mapping of input " << i << "to output " << number << " (output " << number << " is already mapped to from input " << endl;
-      for (int j = 0; j < 26; j++)
-      {
-	if (mapping[j] == number)
-	  cerr << j << " in rotor file " << config_file_name << endl;
-      }
+      exit(INVALID_ROTOR_MAPPING);
     }
+    for (int j = 0; j < 26; j++)
+    {
+      if (mapping[j] == number)
+	cerr << j << ") in rotor file " << config_file_name << endl;
+    }
+    
     mapping[i] = number;
     already_mapped[number] = 1;
     in_stream >> number;
@@ -386,6 +395,12 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
     {
       cerr << "Non-numeric character for mapping in rotor file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
+    }
+
+    if (loop_count > 26)
+    {
+      cerr << "Too many input parameters for rotor file " << config_file_name << endl;
+      exit(TOO_MANY_PARAMETERS);
     }
     
     notches[number] = 1;
@@ -403,7 +418,7 @@ void Rotor::getOutputForwards(int& input)
   if (relative_input > 25)
     relative_input -= 26;
   relative_output = mapping[relative_input];
-  relative_output -= relative_position; //for anticlockwise
+  relative_output -= relative_position; 
   if (relative_output < 0)
     relative_output += 26;
   input = relative_output;
