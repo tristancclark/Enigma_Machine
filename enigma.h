@@ -22,8 +22,8 @@ class Reflector
 class Rotor
 {
  public:
-  int mapping[26];
-  bool notches[26] = {0};
+  int mapping[26] = {};
+  bool notches[26] = {};
   int relative_position = 0;
   
   void initialiseRotor(char* config_file_name, int starting_position);

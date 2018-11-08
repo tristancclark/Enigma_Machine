@@ -158,13 +158,13 @@ void Plugboard::initialisePlugboard(char* config_file_name)
 
     if (loop_count == 14) //check for too many parameters
     {
-      cerr << "Incorrect number of parameters in plugboard file " << config_file_name << " ";
+      cerr << "Incorrect number of parameters in plugboard file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
     }
       
     if (in_stream.fail()) //check for valid input
     {
-      cerr << "Non-numeric character in plugboard file " << config_file_name << " ";
+      cerr << "Non-numeric character in plugboard file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
     
@@ -172,7 +172,7 @@ void Plugboard::initialisePlugboard(char* config_file_name)
     
     if (in_stream.eof()) //check for odd number of parameters
     {
-      cerr << "Incorrect number of parameters in plugboard file " << config_file_name << " ";
+      cerr << "Incorrect number of parameters in plugboard file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
     }
       
@@ -184,18 +184,18 @@ void Plugboard::initialisePlugboard(char* config_file_name)
     
     if (pair[0] == pair[1])
     {
-      cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name << " ";
+      cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name << endl;
       exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION);
     }
     
     if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25)
     {
-      cerr << "Parameter out of range in plugboard file " << config_file_name << " ";
+      cerr << "Parameter out of range in plugboard file " << config_file_name << endl;
       exit(INVALID_INDEX);
     }
     if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1)
     {
-      cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name << " ";
+      cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name << endl;
       exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION);
     }
       
@@ -236,7 +236,7 @@ void Reflector::initialiseReflector(char* config_file_name)
     {
       if (loop_count != 14)
       {
-	cerr << "Insufficient number of mappings in reflector file " << config_file_name;
+	cerr << "Insufficient number of mappings in reflector file " << config_file_name << endl;
 	exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
       }
       else
@@ -245,13 +245,13 @@ void Reflector::initialiseReflector(char* config_file_name)
 
     if (loop_count == 14)
     {
-      cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name;
+      cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
     }
     
     if (in_stream.fail())
     {
-      cerr << "Non-numeric character in reflector file " << config_file_name;
+      cerr << "Non-numeric character in reflector file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
     
@@ -259,31 +259,31 @@ void Reflector::initialiseReflector(char* config_file_name)
     
     if (in_stream.eof())
     {
-      cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name;
+      cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
     }
     
     if (in_stream.fail())
     {
-      cerr << "Non-numeric character in reflector file " << config_file_name;
+      cerr << "Non-numeric character in reflector file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
       
     if (pair[0] == pair[1]) //check mapping digit to itself
     {
-      cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name;
+      cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name << endl;
       exit(INVALID_REFLECTOR_MAPPING);
     }
     
     if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25) //check for out of range
     {
-      cerr << "Parameter out of range in plugboard file " << config_file_name;
+      cerr << "Parameter out of range in plugboard file " << config_file_name << endl;
       exit(INVALID_INDEX);
     }
     
     if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1) //check mapping same number to more than one other
     {
-      cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name;
+      cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name << endl;
       exit(INVALID_REFLECTOR_MAPPING);
     }
       
@@ -324,29 +324,29 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
   {
     if (in_stream.eof())
     {
-      cerr << "Not all inputs mapped in rotor file " << config_file_name;
+      cerr << "Not all inputs mapped in rotor file " << config_file_name << endl;
       exit(INVALID_ROTOR_MAPPING);
     }
     
     if (in_stream.fail())
     {
-      cerr << "Non-numeric character for mapping in rotor file " << config_file_name;
+      cerr << "Non-numeric character for mapping in rotor file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
 
     if (number > 25 || number < 0)
     {
-      cerr << "Parameter out of range in rotor file " << config_file_name;
+      cerr << "Parameter out of range in rotor file " << config_file_name << endl;
       exit(INVALID_INDEX);
     }
 
     if (already_mapped[number] == 1)
     {
-      cerr << "Invalid mapping of input " << i << "to output " << number << " (output " << number << " is already mapped to from input ";
+      cerr << "Invalid mapping of input " << i << "to output " << number << " (output " << number << " is already mapped to from input " << endl;
       for (int j = 0; j < 26; j++)
       {
 	if (mapping[j] == number)
-	  cerr << j << " in rotor file " << config_file_name ;
+	  cerr << j << " in rotor file " << config_file_name << endl;
       }
     }
     mapping[i] = number;
