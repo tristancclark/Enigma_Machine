@@ -143,7 +143,7 @@ void Plugboard::initialisePlugboard(char* config_file_name)
 
   if (in_stream.fail()) //check for failure opening file
   {
-    cerr << "Error: file could not be opened." << endl;
+    cerr << "Error: file " << config_file_name << " could not be opened." << endl;
     exit(ERROR_OPENING_CONFIGURATION_FILE);
   }
 
@@ -178,7 +178,7 @@ void Plugboard::initialisePlugboard(char* config_file_name)
       
     if (in_stream.fail()) //check for invalid input
     {
-      cerr << "Non-numeric character in plugboard file " << config_file_name << " ";
+      cerr << "Non-numeric character in plugboard file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
     
@@ -223,7 +223,7 @@ void Reflector::initialiseReflector(char* config_file_name)
   in_stream.open(config_file_name); //open file
   if (in_stream.fail()) 
   {
-    cerr << "Error: file could not be opened." << endl;
+    cerr << "Error: file " << config_file_name << " could not be opened." << endl;
     exit(ERROR_OPENING_CONFIGURATION_FILE);
   }
       
@@ -312,8 +312,10 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
   relative_position = starting_position;
 
   in_stream.open(config_file_name); //open file
+
+  if (in_stream.fail())
   {
-    cerr << "Error: file could not be opened." << endl;
+    cerr << "Error: file " << config_file_name << " could not be opened." << endl;
     exit(ERROR_OPENING_CONFIGURATION_FILE);
   }
   
