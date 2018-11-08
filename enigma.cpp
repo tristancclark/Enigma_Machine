@@ -29,8 +29,8 @@ void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** a
       }
       
       getTotalOutput(input[i], argc, reflector, plugboard, rotors, number_of_rotors);
+      cout << input[i];
     }
-    cout << input;
     cin >> input;
   }
 }
@@ -65,6 +65,11 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
       {
 	if (!in_stream.eof())
 	{
+	  if (in_stream.fail())
+	  {
+	    cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
+	    exit(NON_NUMERIC_CHARACTER);
+	  }
 	  cerr << "Too many parameters in rotor position file " << argv[index_rotor_position] << ", only " << number_of_rotors << " rotors exist." << endl;
 	  exit(TOO_MANY_PARAMETERS);
 	}
@@ -74,13 +79,13 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
     
       if (in_stream.eof())
       {
-	cerr << "No starting position for rotor " << i << " in rotor position file " << argv[index_rotor_position] << endl;
+	cerr << "No starting position for rotor " << i << " in rotor position file: " << argv[index_rotor_position] << endl;
 	exit(NO_ROTOR_STARTING_POSITION);
       }
     
       if (in_stream.fail())
       {
-	cerr << "Non-numerical character in rotor positions file " << argv[index_rotor_position] << endl;
+	cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
 	exit(NON_NUMERIC_CHARACTER);
       }
       rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
@@ -378,13 +383,13 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
 
     if (already_mapped[number] == 1)
     {
-      cerr << "Invalid mapping of input " << i << "to output " << number << " (output " << number << " is already mapped to from input " << endl;
+      cerr << "Invalid mapping of input " << i << " to output " << number << " (output " << number << " is already mapped to from input " << endl;
  
       for (int j = 0; j < 26; j++)
       {
 	if (mapping[j] == number)
 	{
-	  cerr << j << ") in rotor file " << config_file_name << endl;
+	  cerr << j << ") in rotor file: " << config_file_name << endl;
 	  exit(INVALID_ROTOR_MAPPING);
 	}
       }
