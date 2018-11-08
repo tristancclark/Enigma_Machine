@@ -35,10 +35,11 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
   int index_first_rotor = getFileTypeIndex(argv, argc, ".rot");
   int index_plugboard = getFileTypeIndex(argv, argc, ".pb");
   int index_reflector = getFileTypeIndex(argv, argc, ".rf");
+  int index_rotor_position = getFileTypeIndex(argv, argc, ".pos");
 
   if (!index_plugboard || !index_reflector)
   {
-    cerr << "Error: insufficient number of parameters." << endl;
+    cerr << "usage: enigma plugboard-file reflector-file (<rotor-file>* rotor-positions)?" << endl;
     exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
   }
 
@@ -46,10 +47,32 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
   reflector.initialiseReflector(argv[index_reflector]);
 
   ifstream in_stream;
-  in_stream.open(argv[getFileTypeIndex(argv, argc, ".pos")]);
-  for (int i = 0; i < number_of_rotors; i++)
+  in_stream.open(argv[index_rotor_position]);
+  for (int i = 0; i < number_of_rotors++; i++)
   {
     in_stream >> number;
+    
+    if (i == number_of_rotors)
+    {
+      if (!in_stream.eof())
+      {
+	cerr << "Too many parameters in rotor position file " << argv[index_rotor_position] << ", only " << number_of_rotors << " rotors exist." << endl;
+	exit(TOO_MANY_ROTOR_STARTING_POSITIONS);
+      }
+      else
+	break;
+    }
+    
+    if (in_stream.eof())
+    {
+      cerr << "No starting position for rotor " << i << " in rotor position file " << argv[index_rotor_position] << endl;
+      exit(NO_ROTOR_STARTING_POSITION);
+    }
+    if (in_stream.fail())
+    {
+      cerr << "Non-numerical character in rotor position file " << argv[index_rotor_position] << endl;
+      exit(NON_NUMERIC_CHARACTER);
+    }
     rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
   }
 }
@@ -326,7 +349,7 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
   {
     if (in_stream.eof())
     {
-      cerr << "Not all inputs mapped in rotor file " << config_file_name << endl;
+      cerr << "Not all inputs mapped in rotor file: " << config_file_name << endl;
       exit(INVALID_ROTOR_MAPPING);
     }
     
@@ -352,13 +375,19 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
       }
     }
     mapping[i] = number;
-    mapping[number] = 1;
+    already_mapped[number] = 1;
     in_stream >> number;
   }
 
   //get notch positions
-  while (!in_stream.fail())
+  while (!in_stream.eof())
   {
+    if (in_stream.fail())
+    {
+      cerr << "Non-numeric character for mapping in rotor file " << config_file_name << endl;
+      exit(NON_NUMERIC_CHARACTER);
+    }
+    
     notches[number] = 1;
 
     in_stream >> number;
@@ -380,25 +409,6 @@ void Rotor::getOutputForwards(int& input)
   input = relative_output;
 }
 
-void Rotor::getOutputForwardsWithComments(int& input)
-{
-  cout << "relative position:  " << relative_position << endl;
-  cout << input << "(input) > ";
-  int relative_output, relative_input = input + relative_position;
-  cout << relative_input << "(relative input) > ";
-  if (relative_input > 25)
-    relative_input -= 26;
-  cout << relative_input << "(relative input checked) > ";
-  relative_output = mapping[relative_input];
-  cout << relative_output << "(relative output) > ";
-  relative_output -= relative_position; //for anticlockwise
-  cout << relative_output << "(output) > ";
-  if (relative_output < 0)
-    relative_output += 26;
-  cout << relative_output << "(output checked) > ";
-  input = relative_output;
-  cout << input << endl; 
-}
 
 void Rotor::getOutputBackwards(int& input)
 {

@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
   initialiseEnigma(plugboard, reflector, rotors, argv, argc, number_of_rotors);
   
-  // displayEnigmaSetUp(plugboard, reflector, rotors, argc, number_of_rotors);
+  //displayEnigmaSetUp(plugboard, reflector, rotors, argc, number_of_rotors);
   //uncomment to check enigma set up.
   
   runEnigma(plugboard, reflector, rotors, argv, argc, number_of_rotors);

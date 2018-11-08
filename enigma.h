@@ -28,13 +28,11 @@ class Rotor
   
   void initialiseRotor(char* config_file_name, int starting_position);
   void getOutputForwards(int& input);
-  void getOutputForwardsWithComments(int& input);
   void getOutputBackwards(int& input);
   bool turnRotor();
 };
 
 void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors);
-void getTotalOutputWithComments(char& input_letter, int argc, char** argv, Reflector reflector, Plugboard plugboard, Rotor* rotors);
 void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int& number_of_rotors);
 void displayEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc, int number_of_rotors);
 int getFileTypeIndex(char** argv, int argc, const char* extension);
