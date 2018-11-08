@@ -53,35 +53,38 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
   plugboard.initialisePlugboard(argv[index_plugboard]);
   reflector.initialiseReflector(argv[index_reflector]);
 
-  ifstream in_stream;
-  in_stream.open(argv[index_rotor_position]);
-  for (int i = 0; i < number_of_rotors + 1; i++)
+  if (index_rotor_position)
   {
-    in_stream >> number;
-    
-    if (i == number_of_rotors)
+    ifstream in_stream;
+    in_stream.open(argv[index_rotor_position]);
+    for (int i = 0; i < number_of_rotors + 1; i++)
     {
-      if (!in_stream.eof())
+      in_stream >> number;
+    
+      if (i == number_of_rotors)
       {
-	cerr << "Too many parameters in rotor position file " << argv[index_rotor_position] << ", only " << number_of_rotors << " rotors exist." << endl;
-	exit(TOO_MANY_PARAMETERS);
+	if (!in_stream.eof())
+	{
+	  cerr << "Too many parameters in rotor position file " << argv[index_rotor_position] << ", only " << number_of_rotors << " rotors exist." << endl;
+	  exit(TOO_MANY_PARAMETERS);
+	}
+	in_stream.close();
+	return;
       }
-      in_stream.close();
-      return;
-    }
     
-    if (in_stream.eof())
-    {
-      cerr << "No starting position for rotor " << i << " in rotor position file " << argv[index_rotor_position] << endl;
-      exit(NO_ROTOR_STARTING_POSITION);
-    }
+      if (in_stream.eof())
+      {
+	cerr << "No starting position for rotor " << i << " in rotor position file " << argv[index_rotor_position] << endl;
+	exit(NO_ROTOR_STARTING_POSITION);
+      }
     
-    if (in_stream.fail())
-    {
-      cerr << "Non-numerical character in rotor positions file " << argv[index_rotor_position] << endl;
-      exit(NON_NUMERIC_CHARACTER);
+      if (in_stream.fail())
+      {
+	cerr << "Non-numerical character in rotor positions file " << argv[index_rotor_position] << endl;
+	exit(NON_NUMERIC_CHARACTER);
+      }
+      rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
     }
-    rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
   }
 }
 
