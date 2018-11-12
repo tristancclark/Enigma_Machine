@@ -1,71 +1,94 @@
 #include<iostream>
 #include<fstream>
+#include<cstring>
 #include<string.h>
+#include<cstdlib>
 #include"enigma.h"
 #include"errors.h"
 
 using namespace std;
 
-//plugboard functions
+//THIS SECTION CONTAINS GENERAL FUNCTIONS SPECIFIC TO THE ENIGMA MACHINE AS A WHOLE.
+
+/*Function that runs the enigma machine. This function assumes that plugboard, rotors and reflector
+are all set up previously. Function reads in inputs from the standard input stream (only characters
+between A-Z) and after encrypting/decrypting them outputs them to the standard output stream.*/
+
 void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors)
 {
-  char input[10000];
+  char input_letter;
 
   cin >> ws;
-  cin >> input;
-  while(!cin.eof()){
-    for (size_t i = 0; i < strlen(input); i++)
+  cin >> input_letter;
+  
+  while(!cin.eof())
+  {
+    if (input_letter < 65 || input_letter > 90) //check for invalid input character
     {
-      if (input[i] < 65 || input[i] > 90)
-      {
-	cerr << input[i] << " is not a valid input character (input characters must be upper case letters A-Z)!" << endl;
-	exit(INVALID_INPUT_CHARACTER);
-      }
-      
-      for (int j = 0; j < number_of_rotors; j++) //turn rotors using notches
-      {
-	if (!rotors[number_of_rotors - 1 - j].turnRotor())
-	  break;
-      }
-      
-      getTotalOutput(input[i], argc, reflector, plugboard, rotors, number_of_rotors);
-      cout << input[i];
+      cerr << input_letter << " is not a valid input character (input characters must be upper case letters A-Z)!" << endl;
+      exit(INVALID_INPUT_CHARACTER);
     }
-    cin >> input;
+      
+    for (int j = 0; j < number_of_rotors; j++) //turn far right rotor and cascade turning if a notch aligns
+    {
+      if (!rotors[number_of_rotors - 1 - j].turnRotor())
+	break;
+    }
+    
+    getFinalOutput(input_letter, argc, reflector, plugboard, rotors, number_of_rotors);
+    cout << input_letter; //output encrypted/decrypted character
+    cin >> input_letter;
   }
 }
 
-void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int& number_of_rotors)
+/*Function used to intialise enigma machine. Function reads in information from configuration files
+and exits if an invalid configuration exists. Function sets up 'mapping' arrays in each object,
+the location of notches in the rotors and the starting positions of each rotor. */
+
+void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors)
 {
   int number;
-  number_of_rotors = getNumberOfRotors(argv, argc);
   int index_first_rotor = getFileTypeIndex(argv, argc, ".rot");
   int index_plugboard = getFileTypeIndex(argv, argc, ".pb");
   int index_reflector = getFileTypeIndex(argv, argc, ".rf");
   int index_rotor_position = getFileTypeIndex(argv, argc, ".pos");
 
-  if (!index_plugboard || !index_reflector)
+  if (!index_plugboard || !index_reflector) //check whether .pb and .rf files are present
   {
     cerr << "usage: enigma plugboard-file reflector-file (<rotor-file>* rotor-positions)?" << endl;
     exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
   }
 
-  plugboard.initialisePlugboard(argv[index_plugboard]);
-  reflector.initialiseReflector(argv[index_reflector]);
+  plugboard.initialisePlugboard(argv[index_plugboard]); //initialise plugboard
+  reflector.initialiseReflector(argv[index_reflector]); //initialise reflector
 
-  if (index_rotor_position)
+  //Rest of function extracts rotor positions, checks for errors and passes them to the Rotor initialise rotor member function
+  
+  if (index_rotor_position) //check if .pos if exists then initialise rotors
   {
+    if (index_first_rotor == 0) //check if .rot file exists
+    {
+      cerr << "Position files exists but no rotor files." << endl;
+      exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
+    }
     ifstream in_stream;
-    in_stream.open(argv[index_rotor_position]);
+    in_stream.open(argv[index_rotor_position]); //open .pos file
+
+    if (in_stream.fail()) //check for failure opening file
+    {
+      cerr << "Error: file " << argv[index_rotor_position] << " could not be opened." << endl;
+      exit(ERROR_OPENING_CONFIGURATION_FILE);
+    }
+    
     for (int i = 0; i < number_of_rotors + 1; i++)
     {
       in_stream >> number;
     
       if (i == number_of_rotors)
       {
-	if (!in_stream.eof())
+	if (!in_stream.eof()) //check if all rotor positions have been set but eof flag has not been set
 	{
-	  if (in_stream.fail())
+	  if (in_stream.fail()) //check for failbit
 	  {
 	    cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
 	    exit(NON_NUMERIC_CHARACTER);
@@ -73,25 +96,30 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
 	  cerr << "Too many parameters in rotor position file " << argv[index_rotor_position] << ", only " << number_of_rotors << " rotors exist." << endl;
 	  exit(TOO_MANY_PARAMETERS);
 	}
-	in_stream.close();
-	return;
+	in_stream.close(); 
+	return; //return if all rotor positions set and eof flag has been set
       }
     
-      if (in_stream.eof())
+      if (in_stream.eof()) //check if eof flag has been set and not all rotors positions have been set
       {
 	cerr << "No starting position for rotor " << i << " in rotor position file: " << argv[index_rotor_position] << endl;
 	exit(NO_ROTOR_STARTING_POSITION);
       }
     
-      if (in_stream.fail())
+      if (in_stream.fail()) //check for failbit
       {
 	cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
 	exit(NON_NUMERIC_CHARACTER);
       }
-      rotors[i].initialiseRotor(argv[i + index_first_rotor], number);
+      rotors[i].initialiseRotor(argv[i + index_first_rotor], number); //initialise rotor
     }
   }
 }
+
+
+
+/*Function returns the number of rotors present in the enigma set up but counting the number of
+.rot files in the command line arguments*/
 
 int getNumberOfRotors(char** argv, int argc)
 {
@@ -104,6 +132,9 @@ int getNumberOfRotors(char** argv, int argc)
   return count;
 }
 
+/*Function returns the index of the file with the specified extension appears in the
+command line arguments*/
+
 int getFileTypeIndex(char** argv, int argc, const char* extension)
 {
   for (int i = 0; i < argc; i++)
@@ -114,71 +145,46 @@ int getFileTypeIndex(char** argv, int argc, const char* extension)
   return 0;
 }
 
-void displayEnigmaSetUp(Plugboard plugboard, Reflector reflector, Rotor* rotors, int argc, int number_of_rotors)
+/*Function that takes an input character by reference and passes it through the entire enigma machine and changes
+it to the encripted/decripted character*/
+
+void getFinalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors)
 {
-  cout << "Plugboard mapping:  ";
-  for (int i = 0; i < 26; i++)
-    cout << plugboard.mapping[i] << " ";
-  cout << endl << endl;
-
-  cout << number_of_rotors << " rotors are present." << endl << endl;
-
-  for (int i = 0; i < argc - 4; i++)
-  {
-    cout << "Rotor " << i+1 << " mapping:  ";
-    for (int j = 0; j < 26; j++)
-      cout << rotors[i].mapping[j] << " ";
-    cout << endl;
-    cout << "Relative shift: " << rotors[i].relative_position << endl;
-    cout << "Notches occur at: ";
-    for (int j = 0; j < 26; j++)
-      if(rotors[i].notches[j] == 1)
-	cout << j << " ";
-    cout << endl << endl;
-  }
+  int input_number = input_letter - 65;
   
-  cout << "Reflector mapping:  ";
-  for (int i = 0; i < 26; i++)
-    cout << reflector.mapping[i] << " ";
-  cout << endl;
- }  
-
-      
-void getTotalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors)
-{
-  int input = input_letter - 65;
-  plugboard.getOutput(input);
-  
+  plugboard.getOutput(input_number); //pass forward through plugboard
   
   for (int i = 0; i < number_of_rotors; i++)
   {
-    rotors[number_of_rotors-1-i].getOutputForwards(input);
+    rotors[number_of_rotors-1-i].getOutputForwards(input_number); //pass forward through each rotor
   }
 
-  reflector.getOutput(input);
+  reflector.getOutput(input_number); //pass through reflector
   
   for (int i = 0; i < number_of_rotors; i++)
   {
-    rotors[i].getOutputBackwards(input);
+    rotors[i].getOutputBackwards(input_number); //pass backward through each rotor
   }
 
-  plugboard.getOutput(input);
+  plugboard.getOutput(input_number); //pass backward through plugboard
   
-  input_letter = input + 65;
+  input_letter = input_number + 65;
 }
 
-//PLUGBOARD FUNCTIONS
+//THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS PLUGBOARD.
+
+/*This function initialises the plugboard by reading the configuration file and setting up a 'mapping' array which maps each index to a number. Function checks for errors in configuration file*/
 
 void Plugboard::initialisePlugboard(char* config_file_name)
 {
   ifstream in_stream;
   int pair[2], loop_count = 0;
-  bool swapped[26] = {};
+  bool already_swapped[26] = {};
   
   for (int i = 0; i < 26; i++) //initialise as one to one mapping
     mapping[i] = i;
 
-  in_stream.open(config_file_name);//open file
+  in_stream.open(config_file_name);
 
   if (in_stream.fail()) //check for failure opening file
   {
@@ -221,18 +227,18 @@ void Plugboard::initialisePlugboard(char* config_file_name)
       exit(NON_NUMERIC_CHARACTER);
     }
     
-    if (pair[0] == pair[1])
+    if (pair[0] == pair[1]) //check for attempted mapping of contact to itself
     {
       cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name << endl;
       exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION);
     }
     
-    if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25)
+    if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25) //check for out of range parameter
     {
       cerr << "Parameter out of range in plugboard file " << config_file_name << endl;
       exit(INVALID_INDEX);
     }
-    if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1)
+    if (already_swapped[pair[0]] == 1 || already_swapped[pair[1]] == 1) //check if contact was previously swapped
     {
       cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name << endl;
       exit(IMPOSSIBLE_PLUGBOARD_CONFIGURATION);
@@ -240,27 +246,32 @@ void Plugboard::initialisePlugboard(char* config_file_name)
       
     mapping[pair[0]] = pair[1]; //swap pairs
     mapping[pair[1]] = pair[0];
-    swapped[pair[0]] = 1; //set contacts to already swapped
-    swapped[pair[1]] = 1;
+    already_swapped[pair[0]] = 1; //set contacts to already swapped
+    already_swapped[pair[1]] = 1;
   }
   in_stream.close();
 }
+
+/*Function takes an input integer passed by reference, relating to input character absolute position, 
+and converts it to an output integer, relating to absolute output position.*/
 
 void Plugboard::getOutput(int& input)
 {
   input = mapping[input];
 }
 
-//Reflector functions
+//THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS REFLECTOR.
+
+/*This function initialises a reflector by reading the configuration file and setting up a 'mapping' array which maps each index to a number. Function checks for errors in configuration file*/
 
 void Reflector::initialiseReflector(char* config_file_name)
 {
   ifstream in_stream;
   int pair[2], loop_count = 0;
-  bool swapped[26] = {};
+  bool already_swapped[26] = {};
   
   in_stream.open(config_file_name); //open file
-  if (in_stream.fail()) 
+  if (in_stream.fail()) //check for error opening file
   {
     cerr << "Error: file " << config_file_name << " could not be opened." << endl;
     exit(ERROR_OPENING_CONFIGURATION_FILE);
@@ -269,11 +280,11 @@ void Reflector::initialiseReflector(char* config_file_name)
   while(true)
   {
     loop_count++;
-    in_stream >> pair[0]; //import first digit and check
+    in_stream >> pair[0]; //import FIRST digit
     
-    if (in_stream.eof())
+    if (in_stream.eof()) //check for end of file
     {
-      if (loop_count != 14)
+      if (loop_count != 14) //check if not enough parameters in file
       {
 	cerr << "Insufficient number of mappings in reflector file: " << config_file_name << endl;
 	exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
@@ -282,45 +293,45 @@ void Reflector::initialiseReflector(char* config_file_name)
       return;
     }
 
-    if (loop_count == 14)
+    if (loop_count == 14) //check for too many parameters in file
     {
       cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
     }
     
-    if (in_stream.fail())
+    if (in_stream.fail()) //check for non-numeric character
     {
       cerr << "Non-numeric character in reflector file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
     
-    in_stream >> pair[1]; //import second digit and check
+    in_stream >> pair[1]; //import SECOND digit
     
-    if (in_stream.eof())
+    if (in_stream.eof()) //check for end of file
     {
       cerr << "Incorrect (odd) number of parameters in reflector file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_REFLECTOR_PARAMETERS);
     }
     
-    if (in_stream.fail())
+    if (in_stream.fail()) //check for non-numeric character
     {
       cerr << "Non-numeric character in reflector file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
     }
       
-    if (pair[0] == pair[1]) //check mapping digit to itself
+    if (pair[0] == pair[1]) //check attempted mapping of contact to itself
     {
       cerr << "Attempted connection of contact to itself in plugboard file " << config_file_name << endl;
       exit(INVALID_REFLECTOR_MAPPING);
     }
     
-    if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25) //check for out of range
+    if (pair[0] < 0 || pair[0] > 25 || pair[1] < 0 || pair[1] > 25) //check for out of range input character
     {
       cerr << "Parameter out of range in plugboard file " << config_file_name << endl;
       exit(INVALID_INDEX);
     }
     
-    if (swapped[pair[0]] == 1 || swapped[pair[1]] == 1) //check mapping same number to more than one other
+    if (already_swapped[pair[0]] == 1 || already_swapped[pair[1]] == 1) //check if input character has already been mapped
     {
       cerr << "Attempted connection of a contact with more than one other contact in file " << config_file_name << endl;
       exit(INVALID_REFLECTOR_MAPPING);
@@ -328,11 +339,14 @@ void Reflector::initialiseReflector(char* config_file_name)
       
     mapping[pair[0]] = pair[1]; //swap pairs
     mapping[pair[1]] = pair[0];
-    swapped[pair[0]] = 1; //set numbers to swapped
-    swapped[pair[1]] = 1;
+    already_swapped[pair[0]] = 1; //set character to already swapped
+    already_swapped[pair[1]] = 1;
   }
   in_stream.close();
 }
+
+/*Function takes an input integer passed by reference, relating to input character absolute position, 
+and converts it to output integer, relating to absolute output position.*/
 
 void Reflector::getOutput(int& input)
 {
@@ -340,7 +354,11 @@ void Reflector::getOutput(int& input)
   return;
 }
 
-//rotor functions
+//THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS ROTOR.
+
+/*This function initialises a rotor by reading the configuration file and setting up a 'mapping' array which maps each
+ index to a number, a notches boolean array (true if a notch exists in that position) and sets data
+member relative_position to rotor starting position. Function checks for errors in configuration file*/
 
 void Rotor::initialiseRotor(char* config_file_name, int starting_position)
 {
@@ -423,43 +441,49 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
   in_stream.close();
 }
 
+/*Function takes an input integer passed by reference, relating to input character absolute position, 
+and converts it to output integer, relating to absolute output position.
+Function is specific to going forwards through the rotor.*/
 
 void Rotor::getOutputForwards(int& input)
 {
   int relative_output, relative_input = input + relative_position;
-  if (relative_input > 25)
-    relative_input -= 26;
+  relative_input = relative_input%26; //guard against overflow
   relative_output = mapping[relative_input];
-  relative_output -= relative_position; 
-  if (relative_output < 0)
-    relative_output += 26;
+  relative_output -= relative_position;
+  relative_output = (relative_output + 26)%26; //guard against underflow
   input = relative_output;
 }
 
+/*Function takes an input integer passed by reference, relating to input character absolute position, 
+and converts it to output integer, relating to absolute output position.
+Function is specific to going backwards through the rotor.*/
 
 void Rotor::getOutputBackwards(int& input)
 {
   int relative_output, relative_input = input + relative_position;
-  if (relative_input > 25)
-    relative_input -= 26;
+  relative_input = relative_input%26; //guard against overflow
   for (int i = 0; i < 26; i++)
   {
     if (mapping[i] == relative_input)
     {
       relative_output = i - relative_position;
-      if (relative_output < 0)
-	relative_output += 26;
+      relative_output = (26 + relative_output)%26; //guard against underflow
       input = relative_output;
       return;
     }
   }
 }
 
+/*Function that mimics turning the rotor anticlockwise by one increment by adding one to the
+relative position of that rotor.
+Function returns true if, after turning, a notch exists in absolute position 0.
+Function returns false if, after turning, a notch does not exist in absolute position 0.*/
+
 bool Rotor::turnRotor()
 {
   relative_position++;
-  if (relative_position == 26)
-    relative_position = 0;
+  relative_position = relative_position%26; //guard against overflow
   if (notches[relative_position] == 1)
     return true;
   return false;
