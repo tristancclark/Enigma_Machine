@@ -407,7 +407,7 @@ void Rotor::initialiseRotor(char* config_file_name, int starting_position)
       {
 	if (mapping[j] == number)
 	{
-	  cerr << j << ") in rotor file: " << config_file_name << endl;
+	  cerr << j << ") in rotor file " << config_file_name << endl;
 	  exit(INVALID_ROTOR_MAPPING);
 	}
       }
