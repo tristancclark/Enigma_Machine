@@ -144,7 +144,7 @@ int Enigma::getNumberOfRotors(char** argv, int argc)
 /*Function returns the index of the file with the specified extension appears in the
 command line arguments*/
 
-int getFileTypeIndex(char** argv, int argc, const char* extension)
+int Enigma::getFileTypeIndex(char** argv, int argc, const char* extension)
 {
   for (int i = 0; i < argc; i++)
   {
@@ -189,7 +189,7 @@ Plugboard::Plugboard(char** argv, int argc)
   ifstream in_stream;
   int pair[2], loop_count = 0;
   bool already_swapped[26] = {};
-  char* config_file_name = argv[getFileTypeIndex(argv, argc, ".pb")];  
+  char* config_file_name = argv[getFileIndex(argv, argc)];  
   for (int i = 0; i < 26; i++) //initialise as one to one mapping
     mapping[i] = i;
 
@@ -269,6 +269,19 @@ void Plugboard::getOutput(int& input)
   input = mapping[input];
 }
 
+/*Function returns the index of the file with the specified extension appears in the
+command line arguments*/
+
+int Plugboard::getFileIndex(char** argv, int argc)
+{
+  for (int i = 0; i < argc; i++)
+  {
+    if (strstr(argv[i], ".pb"))
+      return i;
+  }
+  return 0;
+}
+
 //THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS REFLECTOR.
 
 /*This function initialises a reflector by reading the configuration file and setting up a 'mapping' array which maps each index to a number.
@@ -277,7 +290,7 @@ void Plugboard::getOutput(int& input)
 Reflector::Reflector(char** argv, int argc)
 {
   // int index_reflector = getFileTypeIndex(argv, argc, ".rf");
-  char* config_file_name = argv[getFileTypeIndex(argv, argc, ".rf")];
+  char* config_file_name = argv[getFileIndex(argv, argc)];
   ifstream in_stream;
   int pair[2], loop_count = 0;
   bool already_swapped[26] = {};
@@ -364,6 +377,19 @@ void Reflector::getOutput(int& input)
 {
   input = mapping[input];
   return;
+}
+
+/*Function returns the index of the file with the specified extension appears in the
+command line arguments*/
+
+int Reflector::getFileIndex(char** argv, int argc)
+{
+  for (int i = 0; i < argc; i++)
+  {
+    if (strstr(argv[i], ".rf"))
+      return i;
+  }
+  return 0;
 }
 
 //THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS ROTOR.
