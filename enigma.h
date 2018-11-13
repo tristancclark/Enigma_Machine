@@ -5,7 +5,7 @@ class Plugboard
 {
   int mapping[26];
  public:
-  void initialisePlugboard(char* config_file_name);
+  Plugboard(char** argv, int argc);
   void getOutput(int& input);
 };
 
@@ -13,27 +13,39 @@ class Reflector
 {
   int mapping[26];
  public:
-  void initialiseReflector(char* config_file_name);
+  Reflector(char** argv, int argc);
   void getOutput(int& input);
 };
 
 class Rotor
 {
+ private:
   int mapping[26] = {};
   bool notches[26] = {};
   int relative_position = 0;
  public:
-  void initialiseRotor(char* config_file_name, int starting_position);
+  Rotor(char* config_file_name, int starting_position);
   void getOutputForwards(int& input);
   void getOutputBackwards(int& input);
   bool turnRotor();
 };
 
-void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors);
-void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors);
-void getFinalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors);
-int getFileTypeIndex(char** argv, int argc, const char* extension);
-int getNumberOfRotors(char** argv, int argc);
+class Enigma
+{
+ private:
+  Plugboard plugboard;
+  Reflector reflector;
+  Rotor** rotors_array;
+  int number_of_rotors;
+ public:
+  Enigma(char** argv, int argc);
+  ~Enigma();
+  void runEnigma(int argc);
+  void getFinalOutput(char& input_letter, int argc);
+  // int getFileTypeIndex(char** argv, int argc, const char* extension);
+  int getNumberOfRotors(char** argv, int argc);
+};
 
+int getFileTypeIndex(char** argv, int argc, const char* extension);
 
 #endif

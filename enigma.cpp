@@ -14,7 +14,7 @@ using namespace std;
 are all set up previously. Function reads in inputs from the standard input stream (only characters
 between A-Z) and after encrypting/decrypting them outputs them to the standard output stream.*/
 
-void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors)
+void Enigma::runEnigma(int argc)
 {
   char input_letter;
 
@@ -31,11 +31,11 @@ void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** a
       
     for (int j = 0; j < number_of_rotors; j++) //turn far right rotor and cascade turning if a notch aligns
     {
-      if (!rotors[number_of_rotors - 1 - j].turnRotor())
+      if (!rotors_array[number_of_rotors - 1 - j]->turnRotor())
 	break;
     }
     
-    getFinalOutput(input_letter, argc, reflector, plugboard, rotors, number_of_rotors);
+    getFinalOutput(input_letter, argc);
     cout << input_letter; //output encrypted/decrypted character
     cin >> input_letter;
   }
@@ -45,22 +45,21 @@ void runEnigma(Plugboard plugboard, Reflector reflector, Rotor* rotors, char** a
 and exits if an invalid configuration exists. Function sets up 'mapping' arrays in each object,
 the location of notches in the rotors and the starting positions of each rotor. */
 
-void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors, char** argv, int argc, int number_of_rotors)
+Enigma::Enigma(char** argv, int argc) : plugboard(argv, argc), reflector(argv, argc)
 {
   int number;
   int index_first_rotor = getFileTypeIndex(argv, argc, ".rot");
+  int index_rotor_position = getFileTypeIndex(argv, argc, ".pos");
   int index_plugboard = getFileTypeIndex(argv, argc, ".pb");
   int index_reflector = getFileTypeIndex(argv, argc, ".rf");
-  int index_rotor_position = getFileTypeIndex(argv, argc, ".pos");
-
+  number_of_rotors = getNumberOfRotors(argv, argc);
+  rotors_array = new Rotor*[number_of_rotors];
+   
   if (!index_plugboard || !index_reflector) //check whether .pb and .rf files are present
   {
     cerr << "usage: enigma plugboard-file reflector-file (<rotor-file>* rotor-positions)?" << endl;
     exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
   }
-
-  plugboard.initialisePlugboard(argv[index_plugboard]); //initialise plugboard
-  reflector.initialiseReflector(argv[index_reflector]); //initialise reflector
 
   //Rest of function extracts rotor positions, checks for errors and passes them to the Rotor initialise rotor member function
   
@@ -111,9 +110,19 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
 	cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
 	exit(NON_NUMERIC_CHARACTER);
       }
-      rotors[i].initialiseRotor(argv[i + index_first_rotor], number); //initialise rotor
+
+      rotors_array[i] = new Rotor(argv[i + index_first_rotor], number);
     }
   }
+}
+
+Enigma::~Enigma()
+{
+  for (int i = 0; i < number_of_rotors; i++)
+  {
+    delete rotors_array[i];
+  }
+  delete [] rotors_array;
 }
 
 
@@ -121,7 +130,7 @@ void initialiseEnigma(Plugboard& plugboard, Reflector& reflector, Rotor* rotors,
 /*Function returns the number of rotors present in the enigma set up but counting the number of
 .rot files in the command line arguments*/
 
-int getNumberOfRotors(char** argv, int argc)
+int Enigma::getNumberOfRotors(char** argv, int argc)
 {
   int count = 0;
   for (int i = 0; i < argc; i++)
@@ -148,39 +157,39 @@ int getFileTypeIndex(char** argv, int argc, const char* extension)
 /*Function that takes an input character by reference and passes it through the entire enigma machine and changes
 it to the encripted/decripted character*/
 
-void getFinalOutput(char& input_letter, int argc, Reflector reflector, Plugboard plugboard, Rotor* rotors, int number_of_rotors)
+void Enigma::getFinalOutput(char& input_letter, int argc)
 {
   int input_number = input_letter - 65;
-  
+
   plugboard.getOutput(input_number); //pass forward through plugboard
   
   for (int i = 0; i < number_of_rotors; i++)
   {
-    rotors[number_of_rotors-1-i].getOutputForwards(input_number); //pass forward through each rotor
+    rotors_array[number_of_rotors-1-i]->getOutputForwards(input_number); //pass forward through each rotor
   }
 
   reflector.getOutput(input_number); //pass through reflector
   
   for (int i = 0; i < number_of_rotors; i++)
   {
-    rotors[i].getOutputBackwards(input_number); //pass backward through each rotor
+    rotors_array[i]->getOutputBackwards(input_number); //pass backward through each rotor
   }
 
   plugboard.getOutput(input_number); //pass backward through plugboard
-  
   input_letter = input_number + 65;
 }
 
 //THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS PLUGBOARD.
 
-/*This function initialises the plugboard by reading the configuration file and setting up a 'mapping' array which maps each index to a number. Function checks for errors in configuration file*/
+/*This function initialises the plugboard by reading the configuration file and setting up a 'mapping' array
+ which maps each index to a number. Function checks for errors in configuration file*/
 
-void Plugboard::initialisePlugboard(char* config_file_name)
+Plugboard::Plugboard(char** argv, int argc)
 {
   ifstream in_stream;
   int pair[2], loop_count = 0;
   bool already_swapped[26] = {};
-  
+  char* config_file_name = argv[getFileTypeIndex(argv, argc, ".pb")];  
   for (int i = 0; i < 26; i++) //initialise as one to one mapping
     mapping[i] = i;
 
@@ -262,10 +271,13 @@ void Plugboard::getOutput(int& input)
 
 //THIS SECTION CONTAINS MEMBER FUNCTIONS SPECIFIC TO THE CLASS REFLECTOR.
 
-/*This function initialises a reflector by reading the configuration file and setting up a 'mapping' array which maps each index to a number. Function checks for errors in configuration file*/
+/*This function initialises a reflector by reading the configuration file and setting up a 'mapping' array which maps each index to a number.
+ Function checks for errors in configuration file*/
 
-void Reflector::initialiseReflector(char* config_file_name)
+Reflector::Reflector(char** argv, int argc)
 {
+  // int index_reflector = getFileTypeIndex(argv, argc, ".rf");
+  char* config_file_name = argv[getFileTypeIndex(argv, argc, ".rf")];
   ifstream in_stream;
   int pair[2], loop_count = 0;
   bool already_swapped[26] = {};
@@ -360,7 +372,7 @@ void Reflector::getOutput(int& input)
  index to a number, a notches boolean array (true if a notch exists in that position) and sets data
 member relative_position to rotor starting position. Function checks for errors in configuration file*/
 
-void Rotor::initialiseRotor(char* config_file_name, int starting_position)
+Rotor::Rotor(char* config_file_name, int starting_position)
 {
   ifstream in_stream;
   int number, loop_count = 0;
