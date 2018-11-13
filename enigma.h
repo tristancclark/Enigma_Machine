@@ -46,7 +46,7 @@ class Enigma
  private:
   Plugboard plugboard;
   Reflector reflector;
-  Rotor** rotors_array;
+  Rotor** rotors_array; //dynamic array as don't know number of rotors
   int number_of_rotors;
   void getFinalOutput(char& input_letter, int argc);
   int getFileTypeIndex(char** argv, int argc, const char* extension);

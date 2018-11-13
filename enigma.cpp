@@ -50,17 +50,9 @@ Enigma::Enigma(char** argv, int argc) : plugboard(argv, argc), reflector(argv, a
   int number;
   int index_first_rotor = getFileTypeIndex(argv, argc, ".rot");
   int index_rotor_position = getFileTypeIndex(argv, argc, ".pos");
-  int index_plugboard = getFileTypeIndex(argv, argc, ".pb");
-  int index_reflector = getFileTypeIndex(argv, argc, ".rf");
   number_of_rotors = getNumberOfRotors(argv, argc);
   rotors_array = new Rotor*[number_of_rotors];
    
-  if (!index_plugboard || !index_reflector) //check whether .pb and .rf files are present
-  {
-    cerr << "usage: enigma plugboard-file reflector-file (<rotor-file>* rotor-positions)?" << endl;
-    exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
-  }
-
   //Rest of function extracts rotor positions, checks for errors and passes them to the Rotor initialise rotor member function
   
   if (index_rotor_position) //check if .pos if exists then initialise rotors
@@ -87,6 +79,11 @@ Enigma::Enigma(char** argv, int argc) : plugboard(argv, argc), reflector(argv, a
       {
 	if (!in_stream.eof()) //check if all rotor positions have been set but eof flag has not been set
 	{
+	  if (in_stream.bad()) //check for badbit
+	  {
+	    cerr << "Error reading file " << argv[index_rotor_position] << endl;
+	    exit(ERROR_OPENING_CONFIGURATION_FILE);
+	  }
 	  if (in_stream.fail()) //check for failbit
 	  {
 	    cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
@@ -104,7 +101,12 @@ Enigma::Enigma(char** argv, int argc) : plugboard(argv, argc), reflector(argv, a
 	cerr << "No starting position for rotor " << i << " in rotor position file: " << argv[index_rotor_position] << endl;
 	exit(NO_ROTOR_STARTING_POSITION);
       }
-    
+
+      if (in_stream.bad()) //check for badbit
+      {
+	cerr << "Error reading file " << argv[index_rotor_position] << endl;
+	exit(ERROR_OPENING_CONFIGURATION_FILE);
+      }
       if (in_stream.fail()) //check for failbit
       {
 	cerr << "Non-numeric character in rotor positions file " << argv[index_rotor_position] << endl;
@@ -189,7 +191,16 @@ Plugboard::Plugboard(char** argv, int argc)
   ifstream in_stream;
   int pair[2], loop_count = 0;
   bool already_swapped[26] = {};
-  char* config_file_name = argv[getFileIndex(argv, argc)];  
+  int index_plugboard = getFileIndex(argv, argc);
+  char* config_file_name = argv[index_plugboard];
+
+  if (!index_plugboard) //check whether .pb and .rf files are present
+  {
+    cerr << "usage: enigma plugboard-file reflector-file (<rotor-file>* rotor-positions)?" << endl;
+    exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
+  }
+
+
   for (int i = 0; i < 26; i++) //initialise as one to one mapping
     mapping[i] = i;
 
@@ -215,8 +226,13 @@ Plugboard::Plugboard(char** argv, int argc)
       cerr << "Incorrect number of parameters in plugboard file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
     }
-      
-    if (in_stream.fail()) //check for valid input
+
+    if (in_stream.bad()) //check for badbit
+    {
+      cerr << "Error reading file " << config_file_name << endl;
+      exit(ERROR_OPENING_CONFIGURATION_FILE);
+    }
+    if (in_stream.fail()) //check for failbit
     {
       cerr << "Non-numeric character in plugboard file " << config_file_name << endl;
       exit(NON_NUMERIC_CHARACTER);
@@ -229,7 +245,12 @@ Plugboard::Plugboard(char** argv, int argc)
       cerr << "Incorrect number of parameters in plugboard file " << config_file_name << endl;
       exit(INCORRECT_NUMBER_OF_PLUGBOARD_PARAMETERS);
     }
-      
+
+    if (in_stream.bad()) //check for badbit
+    {
+      cerr << "Error reading file " << config_file_name << endl;
+      exit(ERROR_OPENING_CONFIGURATION_FILE);
+    }
     if (in_stream.fail()) //check for invalid input
     {
       cerr << "Non-numeric character in plugboard file " << config_file_name << endl;
@@ -289,11 +310,17 @@ int Plugboard::getFileIndex(char** argv, int argc)
 
 Reflector::Reflector(char** argv, int argc)
 {
-  // int index_reflector = getFileTypeIndex(argv, argc, ".rf");
-  char* config_file_name = argv[getFileIndex(argv, argc)];
+  int index_reflector = getFileIndex(argv, argc);
+  char* config_file_name = argv[index_reflector];
   ifstream in_stream;
   int pair[2], loop_count = 0;
   bool already_swapped[26] = {};
+
+  if (!index_reflector) //check whether .pb and .rf files are present
+  {
+    cerr << "usage: enigma plugboard-file reflector-file (<rotor-file>* rotor-positions)?" << endl;
+    exit(INSUFFICIENT_NUMBER_OF_PARAMETERS);
+  }
   
   in_stream.open(config_file_name); //open file
   if (in_stream.fail()) //check for error opening file
@@ -424,7 +451,12 @@ Rotor::Rotor(char* config_file_name, int starting_position)
       cerr << "Not all inputs mapped in rotor file: " << config_file_name << endl;
       exit(INVALID_ROTOR_MAPPING);
     }
-    
+
+    if (in_stream.bad()) //check for badbit
+    {
+      cerr << "Error reading file " << config_file_name << endl;
+      exit(ERROR_OPENING_CONFIGURATION_FILE);
+    }
     if (in_stream.fail())
     {
       cerr << "Non-numeric character for mapping in rotor file " << config_file_name << endl;
@@ -459,6 +491,11 @@ Rotor::Rotor(char* config_file_name, int starting_position)
   //get notch positions
   while (!in_stream.eof())
   {
+    if (in_stream.bad()) //check for badbit
+    {
+      cerr << "Error reading file " << config_file_name << endl;
+      exit(ERROR_OPENING_CONFIGURATION_FILE);
+    }
     if (in_stream.fail())
     {
       cerr << "Non-numeric character for mapping in rotor file " << config_file_name << endl;
