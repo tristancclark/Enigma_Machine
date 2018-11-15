@@ -1,9 +1,16 @@
-enigma: enigma.o main.o
-	g++ enigma.o main.o -o enigma
-enigma.o: enigma.cpp enigma.h errors.h
-	g++ -Wall -g -c enigma.cpp
-main.o: main.cpp enigma.h errors.h
-	g++ -Wall -g -c main.cpp
+OBJ = enigma.o	main.o
+EXE = enigma
+CXX = g++
+CXXFLAGS = -Wall	-g	-MMD
+
+$(EXE): $(OBJ)
+	$(CXX) $^ -o $@
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $^
+
+-include $(OBJ:.o=.d)
 
 clean:
-	rm -f *.o enigma
+	rm -f *.o enigma *.d
+

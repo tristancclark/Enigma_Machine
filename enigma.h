@@ -1,7 +1,7 @@
 #ifndef ENIGMA_H
 #define ENIGMA_H
 
-//define Reflector class
+//define Plugboard class
 
 class Plugboard
 {
@@ -28,7 +28,7 @@ class Reflector
 class Rotor
 {
  private:
-  int mapping[26] = {};
+  int mapping[26];
   bool notches[26] = {};
   int relative_position = 0;
   
@@ -46,9 +46,9 @@ class Enigma
  private:
   Plugboard plugboard;
   Reflector reflector;
-  Rotor** rotors_array; //dynamic array as don't know number of rotors
+  Rotor** rotors_array; //must use dynamic memory for rotors
   int number_of_rotors;
-  void getFinalOutput(char& input_letter, int argc);
+  void getOutput(char& input_letter, int argc);
   int getFileTypeIndex(char** argv, int argc, const char* extension);
   int getNumberOfRotors(char** argv, int argc);
   

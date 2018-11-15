@@ -7,17 +7,18 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-  
-  //  int number_of_rotors = getNumberOfRotors(argv, argc);
-  //Rotor rotors[number_of_rotors];
-  //Plugboard plugboard;
-  //Reflector reflector;
 
-  Enigma enigma(argv, argc);
-    
-  // initialiseEnigma(plugboard, reflector, rotors, argv, argc, number_of_rotors);
+  try
+  {
+    Enigma enigma(argv, argc); //set up enigma machine
+ 
+    enigma.runEnigma(argc); //run enigma machine
+  }
   
-  enigma.runEnigma(argc);
+  catch(int error_code)
+  {
+    return error_code; //check for errors
+  }
   
-  return 0;
+  return NO_ERROR;
 }
