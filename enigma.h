@@ -1,59 +1,9 @@
 #ifndef ENIGMA_H
 #define ENIGMA_H
 
-//define Plugboard class
-
-class Plugboard
-{
- private:
-  int mapping[26];  //absolute mapping from input position (index) to output position (mapping[index])
-  
- public:
-  //Plugboard constuctor. Sets up plugboard if config files are valid
-  Plugboard(char** argv, int argc);
-  //takes input contact position by reference and converts it to corresponding output contact
-  void getOutput(int& input);
-  //returns position in command line arguments of file with '.pb' extension
-  int getFileIndex(char** argv, int argc);
-};
-
-//define Reflector class
-
-class Reflector
-{
- private:
-  int mapping[26];  //absolute mapping from input position (index) to output position (mapping[index])
-  
- public:
-  //Reflector constructor. Sets up reflector if config files are valid
-  Reflector(char** argv, int argc);
-  //takes input contact position by reference and converts it to corresponding output contact
-  void getOutput(int& input);
-  //returns position in command line arguments of file with '.rf' extension
-  int getFileIndex(char** argv, int argc);
-};
-
-//define Rotor class
-
-class Rotor
-{
- private:
-  int mapping[26]; //absolute mapping from input position (index) to output position (mapping[index])
-  bool notches[26] = {}; //notches array, true if notch appears at that absolute position
-  int relative_position = 0; //relative position to 12 o'clock
-  
- public:
-  //Rotor contructor. Sets up rotor if config files are valid
-  Rotor(char* config_file_name, int starting_position);
-  //takes input contact position by reference and converts it to corresponding output contact
-  //specific to going 'forwards' through rotor
-  void getOutputForwards(int& input);
-  //specific to going 'backwards' through rotor
-  void getOutputBackwards(int& input);
-  //turns rotor anticlockwise once and returns true if a notch then appears at 12 o'clock position
-  bool turnRotor();
-};
-
+#include "plugboard.h"
+#include "reflector.h"
+#include "rotor.h"
 //define Enigma class
 
 class Enigma
@@ -61,23 +11,37 @@ class Enigma
  private:
   Plugboard plugboard;
   Reflector reflector;
-  Rotor** rotors_array; //dynamic memory for rotors
+  Rotor** rotors_array = nullptr; //dynamic memory for rotors
   int number_of_rotors;
-  
-  //takes letter by reference and encrypts/decrypts it
+
+  /*Function takes an input character by reference and encripts/decripts it by passing it through
+    each element of the enigma machine.*/
   void getOutput(char& letter, int argc);
-  //returns position in command line arguments of files with specified extension
+
+  /*Function returns the index of the file where the specified extension appears in the
+    command line arguments*/
   int getFileTypeIndex(char** argv, int argc, const char* extension);
-  //returns the number of rotors present in command line arguments
+
+  /*Function returns the number of rotors present but counting the number of
+    .rot files in the command line arguments*/
   int getNumberOfRotors(char** argv, int argc);
-  
+
  public:
-  //Enigma constructor. Sets up entire Enigma machine if config files are valid
+  /*Enigma class constructor. Used to intialise enigma object.
+    Function reads information from configuration files and throws an integer (error code)
+    exception if an invalid configuration exists. A plugboard and reflector are automatically
+    created on declaration as data members but this constructor is used to count number of rotors
+    and create 0-many rotor objects on the heap. */
   Enigma(char** argv, int argc);
-  //Enigma destructor
+
+  //Enigma class destructor
   ~Enigma();
-  //Runs enigma machine. Takes input from standard input stream, encrypts/decrypts it and
-  //outputs to standard output stream. As long as valid input (A-Z)
+
+  /*Function that runs the enigma machine.
+    This function assumes that plugboard, reflector and 0 to many rotors are set up previously.
+    Function reads in inputs from the standard input stream (only characters between A-Z),
+    throws exeptions if the input is invalid, encrypts/decrypts the characters and outputs
+    them to the standard output stream.*/
   void runEnigma(int argc);
 };
 
